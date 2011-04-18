@@ -30,10 +30,11 @@ class CGIApp(object):
 	response_re = re.compile(r'^(.*?)(?:\n|\r\n){2}(.*)', re.DOTALL)
 	status_re = re.compile(r'(\d\d\d)\s(.*)')
 
-	def __init__(self, basepath, bufsize = -1, output_buf_size = 4096):
+	def __init__(self, basepath, cgi_handlers = {}, bufsize = -1, output_buf_size = 4096):
 		self.basepath = basepath
 		self.bufsize = bufsize
 		self.output_buf_size = output_buf_size
+		self.cgi_handlers = cgi_handlers
 
 	def __call__(self, environ, start_response):
 		try:
@@ -86,8 +87,10 @@ class CGIApp(object):
 					cgienv[name] = environ[name]
 
 			# open script
+			base, ext = os.path.splitext(script_path)
+			args = [script_path] if not ext in self.cgi_handlers else [self.cgi_handlers[ext], script_path]
 			cgiscript = subprocess.Popen(
-				[script_path],
+				args,
 				bufsize = self.bufsize,
 				stdin = environ['wsgi.input'],
 				stdout = subprocess.PIPE,
@@ -152,6 +155,8 @@ class CGIApp(object):
 if '__main__' == __name__:
 	from wsgiref.simple_server import make_server
 
-	app = CGIApp('./cgi-bin')
+	app = CGIApp('./cgi-bin', cgi_handlers = {
+		'.php': '/usr/bin/php-cgi',
+	})
 	server = make_server('0.0.0.0', 12345, app)
 	server.serve_forever()
