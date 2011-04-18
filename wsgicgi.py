@@ -30,9 +30,10 @@ class CGIApp(object):
 	response_re = re.compile(r'^(.*?)(?:\n|\r\n){2}(.*)', re.DOTALL)
 	status_re = re.compile(r'(\d\d\d)\s(.*)')
 
-	def __init__(self, basepath, cgi_handlers = {}, bufsize = -1, output_buf_size = 4096):
+	def __init__(self, basepath, cgi_handlers = {}, bufsize = -1, input_buf_size = 4096, output_buf_size = 4096):
 		self.basepath = basepath
 		self.bufsize = bufsize
+		self.input_buf_size = input_buf_size
 		self.output_buf_size = output_buf_size
 		self.cgi_handlers = cgi_handlers
 
@@ -92,12 +93,26 @@ class CGIApp(object):
 			cgiscript = subprocess.Popen(
 				args,
 				bufsize = self.bufsize,
-				stdin = environ['wsgi.input'],
+				stdin = subprocess.PIPE,
 				stdout = subprocess.PIPE,
 				stderr = environ['wsgi.errors'],
 				cwd = '/',
 				env = cgienv
 			)
+
+			# NOTE: it is tempting to simply pass environ['wsgi.input'] as stdout,
+			#       however this falls apart once subprocess tries to access its fileno()
+
+			# simply stuff everything into the pipe
+			# FIXME: this could possibly break scripts that expect to be able to send data
+			#        before having received the request
+			data_left = int(environ['CONTENT_LENGTH'] or 0)
+			while data_left:
+				amount = min(self.input_buf_size, data_left)
+				data = environ['wsgi.input'].read(amount)
+				data_left -= len(data)
+				cgiscript.stdin.write(data)
+			cgiscript.stdin.close()
 
 			# get the header portion
 			data = ''
