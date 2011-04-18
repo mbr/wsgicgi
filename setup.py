@@ -9,5 +9,5 @@ setup(name='wsgi-cgi',
       author='Marc Brinkmann',
       author_email='git@marcbrinkmann.de',
       url='http://github.com/mbr/wsgi-cgi',
-      #packages=[''],
+      py_modules = ['wsgicgi'],
      )
