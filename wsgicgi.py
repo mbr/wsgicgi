@@ -106,7 +106,7 @@ class CGIApp(object):
 			# simply stuff everything into the pipe
 			# FIXME: this could possibly break scripts that expect to be able to send data
 			#        before having received the request
-			data_left = int(environ['CONTENT_LENGTH'] or 0)
+			data_left = int(environ.get('CONTENT_LENGTH', 0) or 0)
 			while data_left:
 				amount = min(self.input_buf_size, data_left)
 				data = environ['wsgi.input'].read(amount)
