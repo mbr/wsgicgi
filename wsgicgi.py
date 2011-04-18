@@ -86,7 +86,6 @@ class CGIApp(object):
 					cgienv[name] = environ[name]
 
 			# open script
-			cgienv = {}
 			cgiscript = subprocess.Popen(
 				[script_path],
 				bufsize = self.bufsize,
