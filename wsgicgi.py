@@ -30,12 +30,13 @@ class CGIApp(object):
 	response_re = re.compile(r'^(.*?)(?:\n|\r\n){2}(.*)', re.DOTALL)
 	status_re = re.compile(r'(\d\d\d)\s(.*)')
 
-	def __init__(self, basepath, cgi_handlers = {}, bufsize = -1, input_buf_size = 4096, output_buf_size = 4096):
+	def __init__(self, basepath, cgi_handlers = {}, bufsize = -1, input_buf_size = 4096, output_buf_size = 4096, enable_script_filename = True):
 		self.basepath = basepath
 		self.bufsize = bufsize
 		self.input_buf_size = input_buf_size
 		self.output_buf_size = output_buf_size
 		self.cgi_handlers = cgi_handlers
+		self.enable_script_filename = enable_script_filename
 
 	def __call__(self, environ, start_response):
 		try:
@@ -97,6 +98,8 @@ class CGIApp(object):
 				'SERVER_SOFTWARE': environ.get('SERVER_SOFTWARE', ''),
 			}
 
+			if self.enable_script_filename:
+				cgienv['SCRIPT_FILENAME'] = script_path
 			for name in environ:
 				if name.startswith('HTTP_'):
 					cgienv[name] = environ[name]
