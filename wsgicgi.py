@@ -45,6 +45,17 @@ class CGIApp(object):
 			path_info = ''
 			script_path = os.path.abspath(os.path.join(self.basepath, *path_components))
 
+			# try subpaths
+			script_path_components = []
+			while path_components:
+				script_path_components.append(path_components.pop(0))
+
+				candidate = os.path.join(self.basepath, *script_path_components)
+				if os.path.exists(candidate) and not os.path.isdir(candidate):
+					if path_components:
+						path_info = '/' + '/'.join(path_components)
+					script_path = os.path.abspath(os.path.join(self.basepath, *script_path_components))
+
 			# no script? send 404
 			if not os.path.exists(script_path):
 				return self.send_message(environ, start_response, {
