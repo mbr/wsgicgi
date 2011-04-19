@@ -40,6 +40,9 @@ class CGIApp(object):
 	def __call__(self, environ, start_response):
 		try:
 			path_components = environ['PATH_INFO'].split('/')
+
+			# "failsafe"
+			path_info = ''
 			script_path = os.path.abspath(os.path.join(self.basepath, *path_components))
 
 			# no script? send 404
@@ -68,7 +71,7 @@ class CGIApp(object):
 				'CONTENT_LENGTH': environ.get('CONTENT_LENGTH', ''),
 				'CONTENT_TYPE': environ.get('CONTENT_TYPE', ''),
 				'GATEWAY_INTERFACE': 'CGI/1.1',
-				'PATH_INFO': environ.get('PATH_INFO', ''),
+				'PATH_INFO': path_info,
 				'PATH_TRANSLATED': os.path.join(script_path), # partially supported
 				'QUERY_STRING': environ.get('QUERY_STRING', ''),
 				'REMOTE_ADDR': environ.get('REMOTE_ADDR', ''),
