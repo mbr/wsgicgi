@@ -105,6 +105,10 @@ class CGIApp(object):
 
 			if self.enable_script_filename:
 				cgienv['SCRIPT_FILENAME'] = script_path
+
+			#from pprint import pprint as pp
+			#pp(cgienv)
+
 			for name in environ:
 				if name.startswith('HTTP_'):
 					cgienv[name] = environ[name]
