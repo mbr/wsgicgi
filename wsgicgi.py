@@ -30,7 +30,8 @@ class CGIApp(object):
 	response_re = re.compile(r'^(.*?)(?:\n|\r\n){2}(.*)', re.DOTALL)
 	status_re = re.compile(r'(\d\d\d)\s(.*)')
 
-	def __init__(self, basepath, cgi_handlers = {}, bufsize = -1, input_buf_size = 4096, output_buf_size = 4096, enable_script_filename = True):
+	def __init__(self, basepath, document_root = None, cgi_handlers = {}, bufsize = -1, input_buf_size = 4096, output_buf_size = 4096, enable_script_filename = True):
+		self.document_root = document_root or basepath
 		self.basepath = basepath
 		self.bufsize = bufsize
 		self.input_buf_size = input_buf_size
@@ -43,8 +44,10 @@ class CGIApp(object):
 			path_components = environ['PATH_INFO'].split('/')
 
 			# "failsafe"
+			script_name = environ.get('SCRIPT_NAME', '')
 			path_info = ''
 			script_path = os.path.abspath(os.path.join(self.basepath, *path_components))
+			path_translated = self.document_root
 
 			# try subpaths
 			script_path_components = []
@@ -55,7 +58,9 @@ class CGIApp(object):
 				if os.path.exists(candidate) and not os.path.isdir(candidate):
 					if path_components:
 						path_info = '/' + '/'.join(path_components)
+					script_name += '/'.join(script_path_components)
 					script_path = os.path.abspath(os.path.join(self.basepath, *script_path_components))
+					path_translated = os.path.abspath(os.path.join(self.document_root, *path_components))
 
 			# no script? send 404
 			if not os.path.exists(script_path):
@@ -84,14 +89,14 @@ class CGIApp(object):
 				'CONTENT_TYPE': environ.get('CONTENT_TYPE', ''),
 				'GATEWAY_INTERFACE': 'CGI/1.1',
 				'PATH_INFO': path_info,
-				'PATH_TRANSLATED': os.path.join(script_path), # partially supported
+				'PATH_TRANSLATED': path_translated,
 				'QUERY_STRING': environ.get('QUERY_STRING', ''),
 				'REMOTE_ADDR': environ.get('REMOTE_ADDR', ''),
 				'REMOTE_HOST': environ.get('REMOTE_HOST', ''),
 				'REMOTE_IDENT': '', # unsupported
 				'REMOTE_USER': '', # unsupported (related to AUTH_TYPE)
 				'REQUEST_METHOD': environ.get('REQUEST_METHOD', ''),
-				'SCRIPT_NAME': environ.get('SCRIPT_NAME', ''),
+				'SCRIPT_NAME': script_name,
 				'SERVER_NAME': environ.get('SERVER_NAME', ''),
 				'SERVER_PORT': environ.get('SERVER_PORT', ''),
 				'SERVER_PROTOCOL': environ.get('SERVER_PROTOCOL', '') ,
